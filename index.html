@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="sl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sistem za sledenje ocen — demo</title>
+  <style>
+    :root{
+      --blue:#0b68d6; /* ustna */
+      --red:#d62b2b;  /* pisna */
+      --black:#111;    /* izdelek */
+      --bg:#f5f7fb;
+      --accent:#0b5bd6;
+    }
+    body{font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:#222}
+    header{background:white;display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #e5e7eb}
+    .brand{font-weight:700}
+    nav{display:flex;gap:8px;margin-left:auto}
+    nav button{background:transparent;border:0;padding:8px 10px;border-radius:8px;cursor:pointer}
+    nav button.active{background:#eef3ff}
+    main{padding:18px;max-width:1100px;margin:18px auto}
+    .card{background:white;padding:14px;border-radius:10px;box-shadow:0 2px 8px rgba(12,14,25,0.05)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid #f0f0f0}
+    th:first-child,td:first-child{width:26%}
+    .plus{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:2px dashed #cfd8ee;cursor:pointer;margin-left:6px}
+    .grade{font-weight:700;padding:2px 6px;border-radius:6px;margin-right:6px;cursor:pointer}
+    .legend{display:flex;gap:8px;margin-top:10px;align-items:center}
+    .dot{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:6px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .muted{color:#666;font-size:0.95rem}
+    .subject-link{cursor:pointer;color:var(--accent);text-decoration:underline}
+    .icon{width:18px;height:18px;vertical-align:middle}
+    .small{font-size:0.9rem}
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center}
+    .modal{background:white;padding:16px;border-radius:10px;min-width:320px;max-width:720px}
+    .row{display:flex;gap:8px;align-items:center}
+    input,select,textarea{padding:8px;border:1px solid #dcdcdc;border-radius:8px;width:100%;box-sizing:border-box}
+    button.btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    button.primary{background:var(--accent);color:white}
+    .danger{background:#ff4d4f;color:white}
+    .ghost{background:transparent;border:1px solid #ddd}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+    .menu-icon{width:22px;height:22px;margin-right:8px}
+    .right{margin-left:auto}
+    footer{max-width:1100px;margin:12px auto;color:#666}
+    /* responsive */
+    @media(max-width:700px){th,td{font-size:0.95rem}header{flex-wrap:wrap}}
+  </style>
+</head>
+<body>
+  <header class="card">
+    <div class="brand">Sledenje ocen — demo</div>
+    <div class="muted">(lokalni demo, shrani v brskalnik)</div>
+    <nav id="menu">
+      <button id="m-home" class="active"><img class="menu-icon" src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230b5bd6"><path d="M12 3l9 8h-3v8h-12v-8h-3z"/></svg>'/> Domov</button>
+      <button id="m-redovalnica"><img class="menu-icon" src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230b5bd6"><path d="M4 5h16v2h-16zM4 11h16v2h-16zM4 17h16v2h-16z"/></svg>'/> Redovalnica</button>
+      <button id="m-settings"><img class="menu-icon" src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230b5bd6"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM19.4 12.9c.04-.3.06-.61.06-.9s-.02-.6-.06-.9l2.1-1.64a.5.5 0 0 0 .12-.63l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.1 7.1 0 0 0-1.56-.9l-.38-2.65A.5.5 0 0 0 12 2h-4a.5.5 0 0 0-.5.43l-.38 2.65a7.1 7.1 0 0 0-1.56.9l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.63L4.6 11.1c-.04.3-.06.61-.06.9s.02.6.06.9L2.56 14.64a.5.5 0 0 0-.12.63l2 3.46c.14.24.44.34.69.22l2.49-1c.47.36 1 .66 1.56.9l.38 2.65c.05.24.25.43.5.43h4c.24 0 .44-.19.5-.43l.38-2.65c.56-.24 1.09-.54 1.56-.9l2.49 1c.25.12.55.02.69-.22l2-3.46a.5.5 0 0 0-.12-.63L19.4 12.9z"/></svg>'/> Nastavitve</button>
+      <button id="m-admin" style="display:none"><img class="menu-icon" src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23d62b2b"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm6 2h-12c-2.76 0-5 2.24-5 5v1h22v-1c0-2.76-2.24-5-5-5z"/></svg>'/> Admin</button>
+      <button id="m-logout" style="display:none" class="right"><img class="menu-icon" src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff6347"><path d="M16 13v-2h-6v-3l-5 4 5 4v-3zM20 3h-8v2h8v14h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>'/> Odjava</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home-section" class="card">
+      <h2>Hitri pregled ocen</h2>
+      <div id="home-table-wrap"></div>
+      <div class="legend">
+        <div><span class="dot" style="background:var(--blue)"></span> <span class="small">Modra = Ustna ocena</span></div>
+        <div><span class="dot" style="background:var(--red)"></span> <span class="small">Rdeča = Pisna ocena</span></div>
+        <div><span class="dot" style="background:var(--black)"></span> <span class="small">Črna = Izdelek</span></div>
+      </div>
+    </section>
+
+    <section id="redovalnica-section" class="card" style="display:none;margin-top:14px">
+      <h2>Redovalnica (urejanje ocen)</h2>
+      <div id="gradebook"></div>
+      <div class="muted">Opomba: stolpec 2 in 3 imata plus ikone za dodajanje več ocen. Stolpec 4 je zaključna ocena (ena vrednost).</div>
+    </section>
+
+    <section id="settings-section" class="card" style="display:none;margin-top:14px">
+      <h2>Nastavitve</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Spremeni geslo</h3>
+          <div class="row"><input id="old-pw" placeholder="Staro geslo" type="password"></div>
+          <div class="row" style="margin-top:8px"><input id="new-pw" placeholder="Novo geslo" type="password"></div>
+          <div style="margin-top:8px"><button class="btn primary" id="change-pw">Shrani</button></div>
+        </div>
+        <div class="card">
+          <h3>Uredi predmete</h3>
+          <div class="row" style="margin-bottom:8px"><input id="new-subject" placeholder="Novo ime predmeta"></div>
+          <div><button class="btn" id="add-subject">Dodaj predmet</button></div>
+          <div style="margin-top:12px"><strong>Obstoječi predmeti</strong><div id="subjects-list" style="margin-top:8px"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="admin-section" class="card" style="display:none;margin-top:14px">
+      <h2>Admin plošča</h2>
+      <div id="users-list"></div>
+    </section>
+
+  </main>
+
+  <footer class="muted">Demo sistem — vse podatke shrani brskalnik. Uporabi "ADMIN"/"ADMIN" za admin račun.</footer>
+
+  <!-- Modali -->
+  <div id="modal-root"></div>
+
+<script>
+// --- lokalna bazo simuliramo v localStorage ---
+const STORAGE_KEY='grade_system_v1';
+const bc = new BroadcastChannel('gradesync');
+
+function defaultData(){
+  return {
+    users: [
+      {username:'ADMIN',password:'ADMIN',role:'admin',approved:true}
+    ],
+    subjects:['Slovenščina','Matematika','Angleščina','Zgodovina'],
+    grades: { /* username -> subject -> {sem1:[], sem2:[], final: null} */ }
+  };
+}
+
+function load(){
+  let data = localStorage.getItem(STORAGE_KEY);
+  if(!data){
+    data = JSON.stringify(defaultData());
+    localStorage.setItem(STORAGE_KEY,data);
+  }
+  return JSON.parse(localStorage.getItem(STORAGE_KEY));
+}
+function save(d,announce=true){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(d));
+  if(announce) bc.postMessage({type:'update'});
+}
+
+let state = {currentUser:null};
+let DB = load();
+
+// --- utilities ---
+function $(id){return document.getElementById(id)}
+function showSection(id){['home-section','redovalnica-section','settings-section','admin-section'].forEach(s=>$(s).style.display=(s===id?'block':'none')); document.querySelectorAll('#menu button').forEach(b=>b.classList.remove('active')); if(id==='home-section') $('m-home').classList.add('active'); if(id==='redovalnica-section') $('m-redovalnica').classList.add('active'); if(id==='settings-section') $('m-settings').classList.add('active'); if(id==='admin-section') $('m-admin').classList.add('active');}
+
+// --- auth UI ---
+function ensureLoggedIn(){
+  if(!state.currentUser){ openLogin(); }
+}
+
+function openLogin(){
+  const modal = createModal(`<h3>Prijava / Registracija</h3>
+    <div class='row'><input id='li-user' placeholder='Uporabniško ime'></div>
+    <div class='row' style='margin-top:8px'><input id='li-pw' placeholder='Geslo' type='password'></div>
+    <div style='margin-top:8px' class='row'><button id='btn-login' class='btn primary'>Prijava</button><button id='btn-show-reg' class='btn ghost' style='margin-left:8px'>Registracija</button></div>
+    <div style='margin-top:8px' class='muted'>Če še nimaš računa, klikni Registracija. Administrator mora potrditi nove uporabnike.</div>
+  `);
+  $('btn-login').onclick=()=>{
+    const u=$('li-user').value.trim(); const p=$('li-pw').value;
+    if(!u||!p){alert('Vnesi uporabniško ime in geslo');return}
+    const user = DB.users.find(x=>x.username===u && x.password===p);
+    if(!user){alert('Nepravilen user/geslo');return}
+    if(user.role!=='admin' && !user.approved){alert('Račun še ni potrjen s strani administratorja.');return}
+    state.currentUser = {username:user.username,role:user.role};
+    renderMenu();
+    modal.remove();
+    renderAll();
+  };
+  $('btn-show-reg').onclick=()=>{ modal.remove(); openRegister(); };
+}
+function openRegister(){
+  const modal = createModal(`<h3>Registracija</h3>
+    <div class='row'><input id='reg-user' placeholder='Uporabniško ime'></div>
+    <div class='row' style='margin-top:8px'><input id='reg-pw' placeholder='Geslo' type='password'></div>
+    <div style='margin-top:8px;margin-bottom:6px' class='row'><button id='btn-reg' class='btn primary'>Pošlji zahtevo</button><button id='btn-reg-back' class='btn ghost' style='margin-left:8px'>Nazaj</button></div>
+    <div class='muted'>Po registraciji bo račun v stanju čakanja. Admin ga mora potrditi, da bo vreden uporabe.</div>
+  `);
+  $('btn-reg').onclick=()=>{
+    const u=$('reg-user').value.trim(); const p=$('reg-pw').value;
+    if(!u||!p){alert('Popolni podatki so obvezni');return}
+    if(DB.users.some(x=>x.username===u)){alert('Uporabnik že obstaja');return}
+    DB.users.push({username:u,password:p,role:'user',approved:false});
+    save(DB);
+    alert('Zahteva poslana. Počakaj na potrditev administratorja.');
+    modal.remove();
+  };
+  $('btn-reg-back').onclick=()=>{modal.remove(); openLogin();};
+}
+
+// --- modal helper ---
+function createModal(html){
+  const root = $('modal-root');
+  const wrap = document.createElement('div'); wrap.className='modal-backdrop';
+  wrap.innerHTML = `<div class='modal'>${html}<div style='text-align:right;margin-top:12px'><button id='modal-close' class='btn ghost'>Zapri</button></div></div>`;
+  root.appendChild(wrap);
+  $('modal-close').onclick=()=>wrap.remove();
+  return wrap;
+}
+
+// --- render functions ---
+function renderMenu(){
+  if(state.currentUser){
+    $('m-logout').style.display='inline-block';
+    $('m-logout').onclick=()=>{state.currentUser=null; renderMenu(); renderAll();};
+    $('m-admin').style.display = state.currentUser.role==='admin' ? 'inline-block' : 'none';
+  } else {
+    $('m-logout').style.display='none';
+    $('m-admin').style.display='none';
+  }
+}
+
+function renderAll(){
+  DB = load();
+  renderHome();
+  renderGradebook();
+  renderSubjectsList();
+  renderUsersList();
+}
+
+// --- home table (read-only) ---
+function renderHome(){
+  const wrap = $('home-table-wrap'); wrap.innerHTML='';
+  const tbl = document.createElement('table');
+  const thead = document.createElement('thead'); thead.innerHTML='<tr><th>Predmet</th><th>1. polletje</th><th>2. polletje</th><th>Zaključna</th></tr>';
+  tbl.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  const user = state.currentUser ? state.currentUser.username : null;
+  DB.subjects.forEach(sub=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class='subject-link' data-sub='${sub}'>${sub}</span></td>`;
+    const g = DB.grades[user] && DB.grades[user][sub] ? DB.grades[user][sub] : {sem1:[],sem2:[],final:null};
+    const makeCell=(arr)=>{ return arr.map(x=>`<span class='grade' style='color:${colorFor(x.type)}'>${x.value}</span>`).join(' ')};
+    const c1 = `<td>${makeCell(g.sem1)}</td>`;
+    const c2 = `<td>${makeCell(g.sem2)}</td>`;
+    const c4 = `<td>${g.final ? `<span class='grade' style='color:var(--black)'>${g.final}</span>` : ''}</td>`;
+    tr.innerHTML+=c1+c2+c4;
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  wrap.appendChild(tbl);
+  // subject link click opens modal 3
+  wrap.querySelectorAll('.subject-link').forEach(el=>el.onclick=()=>openSubjectModal(el.dataset.sub));
+}
+
+function colorFor(type){ if(type==='ustna') return 'var(--blue)'; if(type==='pisna') return 'var(--red)'; return 'var(--black)'; }
+
+// --- Gradebook (interactive) ---
+function ensureUserGrades(user){
+  if(!DB.grades[user]){ DB.grades[user]={}; DB.subjects.forEach(s=>DB.grades[user][s]={sem1:[],sem2:[],final:null}); }
+}
+
+function renderGradebook(){
+  const wrap = $('gradebook'); wrap.innerHTML='';
+  if(!state.currentUser){ wrap.innerHTML='<div class="muted">Za urejanje ocen se prijavite.</div>'; return }
+  const user = state.currentUser.username; ensureUserGrades(user);
+  const tbl = document.createElement('table');
+  const thead = document.createElement('thead'); thead.innerHTML='<tr><th>Predmet</th><th>1. polletje</th><th>2. polletje</th><th>Zaključna</th></tr>';
+  tbl.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  DB.subjects.forEach(sub=>{
+    const g = DB.grades[user][sub] || {sem1:[],sem2:[],final:null};
+    const tr=document.createElement('tr');
+    const td0 = document.createElement('td'); td0.innerHTML=`<span class='subject-link' data-sub='${sub}'>${sub}</span>`;
+    // col1
+    const td1 = document.createElement('td');
+    g.sem1.forEach((gr,idx)=>{ const span = document.createElement('span'); span.className='grade'; span.style.color=colorFor(gr.type); span.textContent=gr.value; span.onclick=()=>openGradeNoteModal(user,sub,1,idx); td1.appendChild(span); });
+    const plus1 = document.createElement('span'); plus1.className='plus'; plus1.innerHTML='+'; plus1.title='Dodaj oceno 1. polletje'; plus1.onclick=()=>openAddGradeModal(user,sub,1); td1.appendChild(plus1);
+    // col2
+    const td2 = document.createElement('td');
+    g.sem2.forEach((gr,idx)=>{ const span = document.createElement('span'); span.className='grade'; span.style.color=colorFor(gr.type); span.textContent=gr.value; span.onclick=()=>openGradeNoteModal(user,sub,2,idx); td2.appendChild(span); });
+    const plus2 = document.createElement('span'); plus2.className='plus'; plus2.innerHTML='+'; plus2.title='Dodaj oceno 2. polletje'; plus2.onclick=()=>openAddGradeModal(user,sub,2); td2.appendChild(plus2);
+    // col3 final
+    const td3 = document.createElement('td');
+    if(g.final){ const span=document.createElement('span'); span.className='grade'; span.style.color='var(--black)'; span.style.fontSize='1.1rem'; span.textContent=g.final; span.onclick=()=>openFinalModal(user,sub); td3.appendChild(span); } else { const plus3=document.createElement('div'); plus3.className='plus'; plus3.innerHTML='+'; plus3.onclick=()=>openFinalModal(user,sub); td3.appendChild(plus3); }
+    tr.appendChild(td0); tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody); wrap.appendChild(tbl);
+  // subject links
+  wrap.querySelectorAll('.subject-link').forEach(el=>el.onclick=()=>openSubjectModal(el.dataset.sub));
+}
+
+// Modal 1: add grade (sem1 or sem2), multiple allowed
+function openAddGradeModal(user,subject,semester){
+  const modal = createModal(`<h3>Dodaj oceno — ${subject} (${semester==1?'1. polletje':'2. polletje'})</h3>
+    <div class='row'>Tip ocene: <select id='g-type'><option value='ustna'>Ustna</option><option value='pisna'>Pisna</option><option value='izdelek'>Izdelek</option></select></div>
+    <div class='row' style='margin-top:8px'>Ocena: <div style='display:flex;gap:6px;margin-left:6px' id='g-values'></div></div>
+    <div style='margin-top:8px'><textarea id='g-note' placeholder='Opombe (neobvezno)' rows='3'></textarea></div>
+    <div style='margin-top:10px'><button id='g-save' class='btn primary'>Shrani</button></div>
+  `);
+  const valuesWrap = $('g-values'); for(let i=1;i<=5;i++){ const b=document.createElement('button'); b.className='btn ghost'; b.textContent=i; b.onclick=(e)=>{ e.preventDefault(); Array.from(valuesWrap.querySelectorAll('button')).forEach(x=>x.classList.remove('primary')); b.classList.add('primary'); }; valuesWrap.appendChild(b); }
+  $('g-save').onclick=()=>{
+    const t=$('g-type').value; const sel = valuesWrap.querySelector('button.primary'); if(!sel){alert('Izberi oceno');return} const v=Number(sel.textContent); const note=$('g-note').value;
+    ensureUserGrades(user);
+    DB.grades[user][subject][semester==1?'sem1':'sem2'].push({value:v,type:t,note:note});
+    save(DB);
+    modal.remove(); renderAll();
+  };
+}
+
+// Modal for clicking an existing grade -> show note and delete
+function openGradeNoteModal(user,subject,semester,index){
+  const g = DB.grades[user][subject][semester==1?'sem1':'sem2'][index];
+  const modal = createModal(`<h3>Ocena: ${g.value} (${g.type})</h3>
+    <div><strong>Opombe</strong><div style='margin-top:6px' class='muted'>${g.note||'- ni opomb -'}</div></div>
+    <div style='margin-top:10px'><button id='del-grade' class='btn danger'>Izbriši oceno</button></div>
+  `);
+  $('del-grade').onclick=()=>{
+    if(!confirm('Res želite izbrisati to oceno?')) return;
+    DB.grades[user][subject][semester==1?'sem1':'sem2'].splice(index,1);
+    save(DB); modal.remove(); renderAll();
+  };
+}
+
+// Modal 2: final grade. Show auto average then pick 1-5
+function openFinalModal(user,subject){
+  const g = DB.grades[user][subject];
+  const all = [...(g.sem1||[]).map(x=>x.value),(...(g.sem2||[])).map(x=>x.value)].flat();
+  const avg = all.length? (all.reduce((a,b)=>a+b,0)/all.length).toFixed(2) : '—';
+  const modal = createModal(`<h3>Zaključna ocena — ${subject}</h3>
+    <div><strong>Avtomatsko povprečje:</strong> <span class='muted'>${avg}</span></div>
+    <div style='margin-top:8px'>Izberi zaključni oceno (1-5): <div style='display:flex;gap:6px;margin-top:6px' id='final-values'></div></div>
+    <div style='margin-top:10px'><button id='final-save' class='btn primary'>Shrani</button></div>
+  `);
+  const wrap = $('final-values'); for(let i=1;i<=5;i++){ const b=document.createElement('button'); b.className='btn ghost'; b.textContent=i; b.onclick=(e)=>{ e.preventDefault(); Array.from(wrap.querySelectorAll('button')).forEach(x=>x.classList.remove('primary')); b.classList.add('primary'); }; wrap.appendChild(b); }
+  $('final-save').onclick=()=>{
+    const sel = wrap.querySelector('button.primary'); if(!sel){alert('Izberi zaključni oceno');return}
+    const v=Number(sel.textContent);
+    DB.grades[user][subject].final = v;
+    save(DB); renderAll(); const mroot = $('modal-root'); mroot.querySelector('.modal-backdrop').remove();
+  };
+}
+
+// Modal 3: subject statistics
+function openSubjectModal(subject){
+  if(!state.currentUser){ alert('Prijavite se za statistiko.'); return }
+  const user = state.currentUser.username; ensureUserGrades(user);
+  const g = DB.grades[user][subject];
+  const all = [...g.sem1.map(x=>x.value),...g.sem2.map(x=>x.value)];
+  const avg = all.length? (all.reduce((a,b)=>a+b,0)/all.length).toFixed(2) : '—';
+  const counts = [1,2,3,4,5].map(n=>all.filter(x=>x===n).length);
+  const modal = createModal(`<h3>${subject} — statistika</h3>
+    <div><strong>Povprečje:</strong> ${avg}</div>
+    <div style='margin-top:8px'><strong>Število ocen:</strong>
+      <ul>
+        <li>1: ${counts[0]}</li>
+        <li>2: ${counts[1]}</li>
+        <li>3: ${counts[2]}</li>
+        <li>4: ${counts[3]}</li>
+        <li>5: ${counts[4]}</li>
+      </ul>
+    </div>
+  `);
+}
+
+// --- settings ---
+$('add-subject').onclick=()=>{
+  const name=$('new-subject').value.trim(); if(!name){alert('Vnesi ime predmeta');return}
+  if(DB.subjects.includes(name)){alert('Predmet že obstaja');return}
+  DB.subjects.push(name);
+  // add to all users grades
+  Object.keys(DB.grades||{}).forEach(u=>{ if(!DB.grades[u][name]) DB.grades[u][name]={sem1:[],sem2:[],final:null}; });
+  save(DB); $('new-subject').value=''; renderAll();
+};
+
+function renderSubjectsList(){ const wrap=$('subjects-list'); wrap.innerHTML=''; DB.subjects.forEach(s=>{ const div=document.createElement('div'); div.style.display='flex'; div.style.alignItems='center'; div.style.gap='8px'; const n=document.createElement('div'); n.textContent=s; n.style.flex='1'; const del=document.createElement('button'); del.className='btn ghost'; del.textContent='Izbriši'; del.onclick=()=>{ if(!confirm('Izbrišem predmet '+s+'?')) return; DB.subjects = DB.subjects.filter(x=>x!==s); Object.keys(DB.grades||{}).forEach(u=>{ delete DB.grades[u][s]; }); save(DB); renderAll(); }; div.appendChild(n); div.appendChild(del); wrap.appendChild(div); }); }
+
+$('change-pw').onclick=()=>{
+  const oldp=$('old-pw').value; const newp=$('new-pw').value; if(!state.currentUser){alert('Najprej se prijavite.');return}
+  const user = DB.users.find(u=>u.username===state.currentUser.username);
+  if(user.password!==oldp){alert('Napačno staro geslo');return}
+  user.password=newp; save(DB); alert('Geslo spremenjeno.'); $('old-pw').value=''; $('new-pw').value='';
+};
+
+// --- admin ---
+function renderUsersList(){ const wrap=$('users-list'); wrap.innerHTML=''; if(!state.currentUser || state.currentUser.role!=='admin'){ wrap.innerHTML='<div class="muted">Samo za admina</div>'; return }
+  DB.users.forEach(u=>{
+    const div=document.createElement('div'); div.style.display='flex'; div.style.alignItems='center'; div.style.gap='8px'; div.style.padding='6px 0';
+    div.innerHTML=`<div style='flex:1'><strong>${u.username}</strong> — <span class='muted'>${u.role}</span> ${u.role!=='admin'?` — <span class='muted'>${u.approved? 'odobreno':'čaka'}</span>`:''}</div>`;
+    if(u.role!=='admin'){
+      const btnApprove=document.createElement('button'); btnApprove.className='btn primary'; btnApprove.textContent='Odobri'; btnApprove.onclick=()=>{ u.approved=true; save(DB); renderAll(); };
+      const btnDeny=document.createElement('button'); btnDeny.className='btn danger'; btnDeny.textContent='Zavrni'; btnDeny.onclick=()=>{ if(!confirm('Zavrniti '+u.username+'?'))return; DB.users = DB.users.filter(x=>x.username!==u.username); save(DB); renderAll(); };
+      div.appendChild(btnApprove); div.appendChild(btnDeny);
+    }
+    wrap.appendChild(div);
+  });
+}
+
+// menu actions
+$('m-home').onclick=()=>{ showSection('home-section'); }
+$('m-redovalnica').onclick=()=>{ showSection('redovalnica-section'); }
+$('m-settings').onclick=()=>{ showSection('settings-section'); }
+$('m-admin').onclick=()=>{ showSection('admin-section'); }
+$('m-logout').onclick=()=>{ state.currentUser=null; renderMenu(); renderAll(); showSection('home-section'); }
+
+// broadcast channel to sync between tabs
+bc.onmessage = (ev)=>{ if(ev.data && ev.data.type==='update'){ DB = load(); renderAll(); }};
+window.addEventListener('storage',()=>{ DB = load(); renderAll(); });
+
+// init UI
+renderMenu(); renderAll(); showSection('home-section');
+// if no user, open login automatically
+openLogin();
+
+</script>
+</body>
+</html>
